@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../models/vehicle.dart';
+import 'add_vehicle_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,28 +16,17 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeOutBack),
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
     _animationController.forward();
@@ -87,10 +79,33 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  void _navigateToAddVehicle() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const AddVehicleScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
     final userEmail = authService.currentUser?.email ?? 'User';
+    final userId = authService.currentUser?.uid;
 
     return Scaffold(
       body: Container(
@@ -111,28 +126,31 @@ class _HomeScreenState extends State<HomeScreen>
         child: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    // App Bar
-                    _buildAppBar(userEmail),
-                    const Spacer(),
-                    // Welcome Content
-                    _buildWelcomeContent(),
-                    const Spacer(),
-                    // Quick Actions
-                    _buildQuickActions(),
-                    const SizedBox(height: 24),
-                  ],
+            child: Column(
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: _buildAppBar(userEmail),
                 ),
-              ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: _buildHeader(),
+                ),
+                const SizedBox(height: 24),
+                // Vehicle List
+                Expanded(
+                  child: userId != null
+                      ? _buildVehicleList(userId)
+                      : _buildEmptyState(),
+                ),
+              ],
             ),
           ),
         ),
       ),
+      floatingActionButton: _buildFAB(),
     );
   }
 
@@ -151,6 +169,13 @@ class _HomeScreenState extends State<HomeScreen>
                   colors: [const Color(0xFF6C63FF), const Color(0xFF8B7DFF)],
                 ),
                 borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Center(
                 child: Text(
@@ -175,12 +200,16 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  userEmail,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                SizedBox(
+                  width: 180,
+                  child: Text(
+                    userEmail,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -208,140 +237,44 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildWelcomeContent() {
-    return Column(
+  Widget _buildHeader() {
+    return Row(
       children: [
-        // Garage Icon
         Container(
-          width: 120,
-          height: 120,
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [const Color(0xFF6C63FF), const Color(0xFF00D9FF)],
+              colors: [
+                const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                const Color(0xFF00D9FF).withValues(alpha: 0.2),
+              ],
             ),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
-                blurRadius: 40,
-                offset: const Offset(0, 16),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.garage_rounded,
-            color: Colors.white,
-            size: 56,
+            color: const Color(0xFF6C63FF),
+            size: 28,
           ),
         ),
-        const SizedBox(height: 36),
-        // Title
-        Text(
-          'MyGarage',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Subtitle
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '🚗  Your vehicles, organized',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.7),
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        // Status Card
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.check_circle_rounded,
-                color: const Color(0xFF4ADE80),
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'You\'re all set!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your account is ready. Start adding\nyour vehicles to your garage.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.6),
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      children: [
-        Text(
-          'Coming Soon',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.4),
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildActionCard(
-                icon: Icons.directions_car_rounded,
-                label: 'Add Vehicle',
-                color: const Color(0xFF6C63FF),
+            Text(
+              'My Garage',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildActionCard(
-                icon: Icons.build_rounded,
-                label: 'Maintenance',
-                color: const Color(0xFF00D9FF),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildActionCard(
-                icon: Icons.history_rounded,
-                label: 'History',
-                color: const Color(0xFF4ADE80),
+            Text(
+              'Your digital vehicle collection',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -350,39 +283,361 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildActionCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
+  Widget _buildVehicleList(String userId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('vehicles')
+          .orderBy('year', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(color: const Color(0xFF6C63FF)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  color: const Color(0xFFFF6B6B),
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Something went wrong',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 24),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        final vehicles = docs.map((doc) => Vehicle.fromFirestore(doc)).toList();
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          physics: const BouncingScrollPhysics(),
+          itemCount: vehicles.length,
+          itemBuilder: (context, index) {
+            return _buildVehicleCard(vehicles[index], index);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVehicleCard(Vehicle vehicle, int index) {
+    final colors = [
+      const Color(0xFF6C63FF),
+      const Color(0xFF00D9FF),
+      const Color(0xFF4ADE80),
+      const Color(0xFFFFB86C),
+      const Color(0xFFFF6B9D),
+    ];
+    final accentColor = colors[index % colors.length];
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + (index * 100)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 30 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.1),
+              Colors.white.withValues(alpha: 0.05),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w500,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // TODO: Navigate to vehicle details
+            },
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accentColor.withValues(alpha: 0.2),
+                          accentColor.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.directions_car_rounded,
+                      color: accentColor,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Year Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            vehicle.year.toString(),
+                            style: TextStyle(
+                              color: accentColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${vehicle.make} ${vehicle.model}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.speed_rounded,
+                              color: Colors.white.withValues(alpha: 0.4),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              vehicle.formattedMileage,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      size: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                    const Color(0xFF00D9FF).withValues(alpha: 0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.garage_rounded,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    size: 80,
+                  ),
+                  Positioned(
+                    bottom: 25,
+                    child: Icon(
+                      Icons.add_circle_outline_rounded,
+                      color: const Color(0xFF6C63FF),
+                      size: 32,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Your Garage is Empty',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Add your first vehicle to start\ntracking and managing your rides',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white.withValues(alpha: 0.5),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            GestureDetector(
+              onTap: _navigateToAddVehicle,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [const Color(0xFF6C63FF), const Color(0xFF8B7DFF)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Add Your First Vehicle',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFAB() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [const Color(0xFF6C63FF), const Color(0xFF8B7DFF)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6C63FF).withValues(alpha: 0.5),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _navigateToAddVehicle,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, color: Colors.white, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Vehicle',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

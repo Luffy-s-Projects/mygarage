@@ -182,7 +182,6 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // App Icon
         Container(
           width: 70,
           height: 70,
@@ -206,7 +205,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(height: 32),
-        // Welcome Text
         Text(
           'Welcome\nBack',
           style: TextStyle(
@@ -253,7 +251,6 @@ class _LoginScreenState extends State<LoginScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Email Field
             _buildTextField(
               controller: _emailController,
               label: 'Email',
@@ -263,7 +260,6 @@ class _LoginScreenState extends State<LoginScreen>
               validator: _validateEmail,
             ),
             const SizedBox(height: 20),
-            // Password Field
             _buildTextField(
               controller: _passwordController,
               label: 'Password',
@@ -272,19 +268,15 @@ class _LoginScreenState extends State<LoginScreen>
               isPassword: true,
               validator: _validatePassword,
             ),
-            // Error Message
             if (_errorMessage != null) ...[
               const SizedBox(height: 20),
               _buildErrorMessage(),
             ],
             const SizedBox(height: 28),
-            // Sign In Button
             _buildSignInButton(),
             const SizedBox(height: 24),
-            // Divider
             _buildDivider(),
             const SizedBox(height: 24),
-            // Google Sign-In Button
             _buildGoogleSignInButton(),
           ],
         ),

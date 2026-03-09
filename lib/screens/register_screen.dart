@@ -81,7 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         _errorMessage = error;
       });
 
-      // If registration was successful, show snackbar and navigate to login
+      //If registration was successful, show snackbar and navigate to login
       if (error == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -104,7 +104,6 @@ class _RegisterScreenState extends State<RegisterScreen>
             duration: const Duration(seconds: 2),
           ),
         );
-        // Navigate to login screen after a short delay
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) _navigateToLogin();
         });
@@ -190,10 +189,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: size.height * 0.06),
-                      // Logo / Branding Section
                       _buildHeader(),
                       SizedBox(height: size.height * 0.04),
-                      // Register Card
                       _buildRegisterCard(),
                       const SizedBox(height: 32),
                       // Login Link
@@ -214,7 +211,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Back Button
         GestureDetector(
           onTap: _navigateToLogin,
           child: Container(
@@ -233,7 +229,6 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: 28),
-        // App Icon
         Container(
           width: 70,
           height: 70,
@@ -257,7 +252,6 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: 28),
-        // Welcome Text
         Text(
           'Create\nAccount',
           style: TextStyle(
@@ -304,7 +298,6 @@ class _RegisterScreenState extends State<RegisterScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Email Field
             _buildTextField(
               controller: _emailController,
               label: 'Email',
@@ -314,7 +307,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               validator: _validateEmail,
             ),
             const SizedBox(height: 20),
-            // Password Field
             _buildTextField(
               controller: _passwordController,
               label: 'Password',
@@ -328,7 +320,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               validator: _validatePassword,
             ),
             const SizedBox(height: 20),
-            // Confirm Password Field
             _buildTextField(
               controller: _confirmPasswordController,
               label: 'Confirm Password',
@@ -343,22 +334,17 @@ class _RegisterScreenState extends State<RegisterScreen>
               },
               validator: _validateConfirmPassword,
             ),
-            // Error Message
             if (_errorMessage != null) ...[
               const SizedBox(height: 20),
               _buildErrorMessage(),
             ],
             const SizedBox(height: 28),
-            // Password Requirements
             _buildPasswordRequirements(),
             const SizedBox(height: 24),
-            // Register Button
             _buildRegisterButton(),
             const SizedBox(height: 24),
-            // Divider
             _buildDivider(),
             const SizedBox(height: 24),
-            // Google Sign-In Button
             _buildGoogleSignInButton(),
           ],
         ),

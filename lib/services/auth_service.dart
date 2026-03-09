@@ -2,23 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-/// AuthService - Handles all Firebase Authentication operations
-/// Uses ChangeNotifier to notify listeners when auth state changes
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Current user getter
   User? get currentUser => _auth.currentUser;
 
-  // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Check if user is logged in
   bool get isLoggedIn => currentUser != null;
 
-  /// Sign in with email and password
-  /// Returns null on success, error message on failure
+  //Sign in with email and password
   Future<String?> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -37,9 +31,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// Register with email and password
-  /// Returns null on success, error message on failure
-  /// Note: Does NOT sign in the user after registration
+  //Register with email and password
   Future<String?> registerWithEmailAndPassword({
     required String email,
     required String password,
@@ -49,7 +41,6 @@ class AuthService extends ChangeNotifier {
         email: email.trim(),
         password: password,
       );
-      // Sign out immediately so user can go to login screen
       await _auth.signOut();
       notifyListeners();
       return null; // Success
@@ -60,29 +51,25 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// Sign in with Google
-  /// Returns null on success, error message on failure
+  //Sign in with Google
   Future<String?> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        // User cancelled the sign-in
         return 'Google sign-in was cancelled.';
       }
 
-      // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create a new credential
+      //Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
+      //Sign in to Firebase with the Google credential
       await _auth.signInWithCredential(credential);
       notifyListeners();
       return null; // Success
@@ -93,14 +80,13 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// Sign out the current user
+  //Sign out the current user
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
     notifyListeners();
   }
 
-  /// Handle Firebase Auth exceptions and return user-friendly messages
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
