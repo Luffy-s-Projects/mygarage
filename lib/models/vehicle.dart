@@ -5,6 +5,7 @@ class Vehicle {
   final String make;
   final String model;
   final int year;
+  final String licensePlate;
   final int mileage;
 
   Vehicle({
@@ -12,6 +13,7 @@ class Vehicle {
     required this.make,
     required this.model,
     required this.year,
+    required this.licensePlate,
     required this.mileage,
   });
 
@@ -22,12 +24,19 @@ class Vehicle {
       make: data['make'] ?? '',
       model: data['model'] ?? '',
       year: data['year'] ?? 0,
+      licensePlate: data['licensePlate'] ?? '',
       mileage: data['mileage'] ?? 0,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {'make': make, 'model': model, 'year': year, 'mileage': mileage};
+    return {
+      'make': make,
+      'model': model,
+      'year': year,
+      'licensePlate': licensePlate,
+      'mileage': mileage,
+    };
   }
 
   Vehicle copyWith({
@@ -35,6 +44,7 @@ class Vehicle {
     String? make,
     String? model,
     int? year,
+    String? licensePlate,
     int? mileage,
   }) {
     return Vehicle(
@@ -42,6 +52,7 @@ class Vehicle {
       make: make ?? this.make,
       model: model ?? this.model,
       year: year ?? this.year,
+      licensePlate: licensePlate ?? this.licensePlate,
       mileage: mileage ?? this.mileage,
     );
   }
