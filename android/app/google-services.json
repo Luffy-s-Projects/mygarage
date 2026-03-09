@@ -12,7 +12,20 @@
           "package_name": "com.example.mygarage"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "404504690912-v17p1n4dducdq5ut1m7atn5c0e5hfii3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mygarage",
+            "certificate_hash": "f502ba81accc689b437d4bc3fbc753f9f9c19fd8"
+          }
+        },
+        {
+          "client_id": "404504690912-sal0vqmgtevss5u2hunltcclibm98sci.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBLYXVyBa7e5T6Ic-8tV_nJN09R7J-w4a8"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "404504690912-sal0vqmgtevss5u2hunltcclibm98sci.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "404504690912-7b0ooio5ll0bu1fn75iofrot89usdfc0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mygarage"
+              }
+            }
+          ]
         }
       }
     }
